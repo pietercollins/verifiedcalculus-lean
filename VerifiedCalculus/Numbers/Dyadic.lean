@@ -35,6 +35,9 @@ instance Dyadic.instMax : Max Dyadic := maxOfLe
 instance Dyadic.instMin : Min Dyadic := minOfLe
 
 
+protected def Dyadic.hlf (w : Dyadic) : Dyadic :=
+  Dyadic.shiftRight w 1
+
 protected def Dyadic.max (w1 w2 : Dyadic) : Dyadic :=
   if w1 ≤ w2 then w2 else w1
 
@@ -44,7 +47,7 @@ protected def Dyadic.min (w1 w2 : Dyadic) : Dyadic :=
 protected def Dyadic.abs (a : Dyadic) : Dyadic :=
   if 0 ≤ a then a else -a
 
-protected def Dyadic.abs' (w : Dyadic) : Dyadic :=
+private protected def Dyadic.abs' (w : Dyadic) : Dyadic :=
   match w with
   | zero => zero
   | Dyadic.ofOdd m e p =>
@@ -129,10 +132,10 @@ private theorem Dyadic.pos_int {n : Int} {k} {ho} : zero ≤ ofOdd n k ho ↔ 0 
 private theorem Dyadic.neg_int {n : Int} {k} {ho} : ofOdd n k ho ≤ zero ↔ n ≤ 0 := by
   rw [@Dyadic.le_op (ofOdd n k ho) zero]; unfold ble; simp
 
-theorem Dyadic.add_le_add_left : forall w1 w2 w3 : Dyadic,
+theorem Dyadic.add_le_add_left : forall {w1 w2 w3 : Dyadic},
   w3 + w1 ≤ w3 + w2 ↔ w1 ≤ w2 := by grind
 
-theorem Dyadic.add_le_add_left' : forall w1 w2 w3 : Dyadic,
+theorem Dyadic.add_le_add_left' : forall {w1 w2 w3 : Dyadic},
   w3 + w1 ≤ w3 + w2 ↔ w1 ≤ w2 := by
   intro w1 w2 w3
   apply Iff.intro
@@ -150,8 +153,17 @@ theorem Dyadic.add_le_add_left' : forall w1 w2 w3 : Dyadic,
     rw [←Dyadic.toRat_add] at H'
     exact Dyadic.toRat_le_toRat_iff.mp H'
 
-theorem Dyadic.add_le_add_right : forall w1 w2 w3 : Dyadic,
+theorem Dyadic.add_le_add_right : forall {w1 w2 w3 : Dyadic},
   w1 + w3 ≤ w2 + w3 ↔ w1 ≤ w2 := by grind
+
+theorem Dyadic.add_le_add {w1 w2 w3 w4 : Dyadic} :
+  w1 ≤ w3 → w2 ≤ w4 → w1 + w2 ≤ w3 + w4 :=
+by
+  intros H13 H24
+  trans w1 + w4
+  · exact Dyadic.add_le_add_left.mpr H24
+  · exact Dyadic.add_le_add_right.mpr H13
+
 
 theorem Dyadic.neg_neg : forall w : Dyadic,
   - (-w) = w := by grind
@@ -257,7 +269,7 @@ theorem Dyadic.abs_of_nonpos : forall {w : Dyadic}, w ≤ 0 → |w| = -w := by
   · exact neg_nonneg.mpr Hwle0
 
 
-theorem Dyadic.abs_op (w : Dyadic) : Dyadic.abs w = abs w := by
+theorem Dyadic.abs_op (w : Dyadic) : Dyadic.abs w = |w| := by
   unfold Dyadic.abs
   rcases Dyadic.instDecidableLE 0 w with Hn0lew | H0lew
   · have Hwle0 : w ≤ 0 := by exact Std.le_of_not_ge Hn0lew
@@ -313,6 +325,8 @@ theorem Dyadic.abs_pos : forall w : Dyadic, 0 ≤ |w| := by
     exact neg_nonneg.mpr Hwle0
   · rw [abs_of_nonneg H0lew]; trivial
 
+theorem Dyadic.abs_neg : forall (w : Dyadic), |-w| = |w| := by
+  exact _root_.abs_neg
 
 theorem Dyadic.abs_add : forall (w1 w2 : Dyadic), |w1 + w2| ≤ |w1| + |w2| := by
   intro w1 w2;
@@ -321,13 +335,12 @@ theorem Dyadic.abs_add : forall (w1 w2 : Dyadic), |w1 + w2| ≤ |w1| + |w2| := b
     rw [Dyadic.abs_of_nonpos p12]
     rw [Dyadic.neg_add w1 w2]
     refine @Dyadic.le_trans _ (-w1 + |w2|) _ ?_ ?_
-    · exact (add_le_add_left (-w2) |w2| (-w1)).mpr (neg_le_abs w2)
-    · exact (add_le_add_right (-w1) |w1| |w2|).mpr (neg_le_abs w1)
+    · exact (@add_le_add_left (-w2) |w2| (-w1)).mpr (neg_le_abs w2)
+    · exact (@add_le_add_right (-w1) |w1| |w2|).mpr (neg_le_abs w1)
   · rw [Dyadic.abs_of_nonneg p12]
     refine @Dyadic.le_trans _ (w1 + |w2|) _ ?_ ?_
-    · exact (add_le_add_left w2 |w2| w1).mpr (le_abs w2)
-    · exact (add_le_add_right w1 |w1| |w2|).mpr (le_abs w1)
-
+    · exact (@add_le_add_left w2 |w2| w1).mpr (le_abs w2)
+    · exact (@add_le_add_right w1 |w1| |w2|).mpr (le_abs w1)
 
 theorem Dyadic.abs_mul : forall (w1 w2 : Dyadic), |w1 * w2| = |w1| * |w2| := by
   intro w1 w2;
@@ -356,6 +369,18 @@ theorem Dyadic.abs_mul : forall (w1 w2 : Dyadic), |w1 * w2| = |w1| * |w2| := by
     · rw [Dyadic.abs_of_nonneg p2]
       have p12 : 0 ≤ w1 * w2 := by exact mul_nonneg p1 p2
       rw [Dyadic.abs_of_nonneg p12]
+
+theorem Dyadic.abs_sub_eq (x y : Dyadic) : |x-y| = |y-x| := by
+  have ns : y-x = - (x-y) := by
+    rw [Eq.symm (neg_sub x y)]
+  rw [ns]
+  symm; exact Dyadic.abs_neg (x-y)
+
+theorem Dyadic.abs_triangle {y} {x z : Dyadic} : |x - z| ≤  |x - y| + |y - z| := by
+  have sum_diff : (x - z) = (x - y) + (y - z) := by
+    simp_all only [sub_add_sub_cancel]
+  rw [sum_diff]
+  exact Dyadic.abs_add (x - y) (y - z)
 
 
 
@@ -392,6 +417,7 @@ by
   zsmul := Dyadic.zsmul
   neg_add_cancel := Dyadic.neg_add_cancel
 -/
+
 
 theorem Dyadic.toRat_ofInt_eq_Rat_ofInt {n : Int} :
     (ofInt n).toRat = Rat.ofInt n := by
@@ -460,10 +486,60 @@ instance inst_Semiring_Dyadic : Semiring Dyadic where
 private theorem Int.negSucc_eq_neg_add_one : forall n, Int.negSucc n = - ((Int.ofNat n) + 1) := by
   intro n; rfl
 
-/-
-set_option pp.all true
-set_option pp.all false
--/
+
+theorem Dyadic.comp_shiftLeft : forall (w : Dyadic) (n1 n2 : Int),
+  Dyadic.shiftLeft (Dyadic.shiftLeft w n1) n2 = Dyadic.shiftLeft w (n1+n2) :=
+by
+  unfold Dyadic.shiftLeft
+  intro w n1 n2
+  cases w with
+  | zero => simp
+  | ofOdd z k Hz =>
+      simp only [ofOdd.injEq, true_and]
+      exact Int.sub_sub k n1 n2
+
+theorem Dyadic.mul_shiftLeft : forall (w1 w2 : Dyadic) (n : Int),
+  Dyadic.shiftLeft (w1 * w2) n = w1 * (Dyadic.shiftLeft w2 n) :=
+by
+  have mul_op (w1 w2 : Dyadic) : Dyadic.mul w1 w2 = w1 * w2 := by rfl
+  intros w1 w2 n
+  rw [←mul_op]; rw [←mul_op]; unfold Dyadic.mul
+  unfold Dyadic.shiftLeft
+  cases h1 : w1 with
+  | zero => rfl
+  | ofOdd n1 k1 hn1 =>
+      cases h2 : w2 with
+      | zero =>  rfl
+      | ofOdd n2 k2 hn2 =>
+          simp only [ofOdd.injEq, true_and]
+          exact Int.add_sub_assoc k1 k2 n
+
+
+theorem Dyadic.two_exp_zero : two_exp 0 = 1 := by rfl
+
+theorem Dyadic.two_exp_one : two_exp 1 = 2 := by rfl
+
+theorem Dyadic.two_exp_sum : forall (n1 n2 : Int),
+  two_exp n1 * two_exp n2 = two_exp (n1+n2) :=
+by
+  intros n1 n2
+  unfold Dyadic.two_exp
+  rw [←Dyadic.mul_shiftLeft]
+  rw [Dyadic.mul_comm]
+  rw [←Dyadic.mul_shiftLeft]
+  rw [Dyadic.comp_shiftLeft]
+  rw [Dyadic.one_mul]
+
+theorem Dyadic.twice_two_exp : forall {n : Int},
+  two_exp (n-1) + two_exp (n-1) = two_exp n :=
+by
+  intro n
+  rw [←two_mul]
+  rw [←two_exp_one]
+  rw [two_exp_sum]
+  rw [Int.add_comm]
+  rw [Int.sub_add_cancel]
+
 
 private theorem Dyadic.max_left : forall w1 w2, w1 ≤ w2 → Dyadic.max w1 w2 = w2 := by
   intros w1 w2 Hw12; unfold Dyadic.max; exact if_pos Hw12
@@ -546,6 +622,7 @@ instance inst_PartialOrder_Dyadic : PartialOrder Dyadic where
   le_antisymm := @Dyadic.le_antisymm
 
 
+/-
 instance instLatticeDyadic : Lattice Dyadic where
   sup := Dyadic.max
   le_sup_left := Dyadic.le_sup_left
@@ -555,6 +632,7 @@ instance instLatticeDyadic : Lattice Dyadic where
   inf_le_left := Dyadic.inf_le_left
   inf_le_right := Dyadic.inf_le_right
   le_inf := @Dyadic.le_inf
+-/
 
 /-
 instance instAbsDyadic : AbsoluteValue Dyadic Dyadic where
