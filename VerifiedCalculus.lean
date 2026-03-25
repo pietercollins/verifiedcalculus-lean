@@ -4,3 +4,4 @@ import VerifiedCalculus.Logic.Kleeneans
 
 import VerifiedCalculus.Numbers.Integer
 import VerifiedCalculus.Numbers.Dyadic
+import VerifiedCalculus.Numbers.Floats
