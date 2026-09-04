@@ -4,7 +4,7 @@ Released under the GNU GPLv3 as described in the file LICENSE.
 Authors: Pieter Collins
 -/
 
-import VerifiedCalculus.Omniscience
+import VerifiedCalculus.Logic.Omniscience
 
 
 inductive Tribool : Type where | true | indeterminate | false

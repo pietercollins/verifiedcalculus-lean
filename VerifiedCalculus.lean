@@ -1,3 +1,3 @@
-import VerifiedCalculus.Omniscience
-import VerifiedCalculus.Sierpinskians
-import VerifiedCalculus.Kleeneans
+import VerifiedCalculus.Logic.Omniscience
+import VerifiedCalculus.Logic.Sierpinskians
+import VerifiedCalculus.Logic.Kleeneans
