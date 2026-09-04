@@ -1,32 +1,10 @@
 /-
-Copyright  2025-26  Pieter Collins 
+Copyright  2025-26  Pieter Collins
 Released under the GNU GPLv3 as described in the file LICENSE.
 Authors: Pieter Collins
 -/
 
-
-theorem forall_impl {X : Type} : forall (p : X -> Prop) (q : Prop),
-    (forall x, (p x -> q)) → ((exists x, p x) -> q) := by
-  intros p q HA HE; cases HE with | intro x Hx => exact HA x Hx
-
-theorem exists_impl {X : Type} : forall (p : X -> Prop) (q : Prop),
-    ((exists x, p x) -> q) → (forall x, (p x -> q)) := by
-  intros p q HE x Hpx; apply HE; exists x
-
-theorem exists_forall_impl {X : Type} : forall (p : X -> Prop) (q : Prop),
-    ((exists x, p x) -> q) ↔ (forall x, (p x -> q)) := by
-  intros p q; exact Iff.intro (exists_impl p q) (forall_impl p q)
-
-
-inductive SumBool (P1 P2 : Prop) : Type where
-  | case1 : forall _ : P1, SumBool P1 P2
-  | case2 : forall _ : P2, SumBool P1 P2
-
-theorem SumBool.forget : forall (P1 P2 : Prop), SumBool P1 P2 -> P1 ∨ P2 := by
-  intros P1 P2 H
-  cases H with
-  | case1 p1 => left; exact p1
-  | case2 p2 => right; exact p2
+import VerifiedCalculus.Omniscience
 
 
 inductive Tribool : Type where | true | indeterminate | false
@@ -211,8 +189,8 @@ def Kleenean.monotone_true_false : forall (seq : Nat -> Tribool), is_monotone se
 def Kleenean.equivalent (k1 k2 : Kleenean) : Prop :=
   exists m, forall n, m <= n -> k1.seq n = k2.seq n
 
-infix:90 (name := eqvOp) " ≡ " => Kleenean.equivalent
-infix:90 " ≈ " => Kleenean.equivalent
+local infix:90 (name := eqvOp) " ≡ " => Kleenean.equivalent
+local infix:90 " ≈ " => Kleenean.equivalent
 
 theorem Kleenean.equivalent_refl : forall k : Kleenean, k ≡ k := by
   intros k; exists 0; intros n Hle; exact Eq.refl (k.seq n)
@@ -250,7 +228,6 @@ def Kleenean.setoid : Setoid Kleenean :=
 
 def QuotientKleenean := Quotient Kleenean.setoid
 def QuotientKleenean.mk := Quotient.mk Kleenean.setoid
-def qtrue : QuotientKleenean := QuotientKleenean.mk Kleenean.true
 
 
 /-
@@ -292,7 +269,7 @@ theorem Kleenean.is_indeterminate : forall (k : Kleenean),
 
 
 
-def LPO : Type :=
+def Kleenean.LPO : Type :=
   forall (p : forall _ : Nat, Prop),
     forall (_ : forall n : Nat, SumBool (p n) (Not (p n))),
       SumBool (exists n, p n) (forall n, Not (p n))

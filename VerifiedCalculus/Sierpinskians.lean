@@ -4,30 +4,7 @@ Released under the GNU GPLv3 as described in the file LICENSE.
 Authors: Pieter Collins
 -/
 
-
-theorem forall_impl {X : Type} : forall (p : X -> Prop) (q : Prop),
-    (forall x, (p x -> q)) → ((exists x, p x) -> q) := by
-  intros p q HA HE; cases HE with | intro x Hx => exact HA x Hx
-
-theorem exists_impl {X : Type} : forall (p : X -> Prop) (q : Prop),
-    ((exists x, p x) -> q) → (forall x, (p x -> q)) := by
-  intros p q HE x Hpx; apply HE; exists x
-
-theorem exists_forall_impl {X : Type} : forall (p : X -> Prop) (q : Prop),
-    ((exists x, p x) -> q) ↔ (forall x, (p x -> q)) := by
-  intros p q; exact Iff.intro (exists_impl p q) (forall_impl p q)
-
-
-inductive SumBool (P1 P2 : Prop) : Type where
-  | case1 : forall _ : P1, SumBool P1 P2
-  | case2 : forall _ : P2, SumBool P1 P2
-
-theorem SumBool.forget : forall (P1 P2 : Prop), SumBool P1 P2 -> P1 ∨ P2 := by
-  intros P1 P2 H
-  cases H with
-  | case1 p1 => left; exact p1
-  | case2 p2 => right; exact p2
-
+import VerifiedCalculus.Omniscience
 
 inductive BasicSierpinskian : Type where | true | indeterminate
 
@@ -108,8 +85,8 @@ def Sierpinskian.monotone_true : forall (seq : Nat -> BasicSierpinskian), is_mon
 def Sierpinskian.equivalent (k1 k2 : Sierpinskian) : Prop :=
   exists m, forall n, m <= n -> k1.seq n = k2.seq n
 
-infix:90 (name := eqvOp) " ≡ " => Sierpinskian.equivalent
-infix:90 " ≈ " => Sierpinskian.equivalent
+local infix:90 (name := eqvOp) " ≡ " => Sierpinskian.equivalent
+local infix:90 " ≈ " => Sierpinskian.equivalent
 
 theorem Sierpinskian.equivalent_refl : forall k : Sierpinskian, k ≡ k := by
   intros k; exists 0; intros n Hle; exact Eq.refl (k.seq n)
@@ -147,7 +124,6 @@ def Sierpinskian.setoid : Setoid Sierpinskian :=
 
 def QuotientSierpinskian := Quotient Sierpinskian.setoid
 def QuotientSierpinskian.mk := Quotient.mk Sierpinskian.setoid
-def qtrue : QuotientSierpinskian := QuotientSierpinskian.mk Sierpinskian.true
 
 
 /-
@@ -172,7 +148,7 @@ theorem Sierpinskian.is_indeterminate : forall (k : Sierpinskian),
 
 
 
-def LPO : Type :=
+def Sierpinskian.LPO : Type :=
   forall (p : forall _ : Nat, Prop),
     forall (_ : forall n : Nat, SumBool (p n) (Not (p n))),
       SumBool (exists n, p n) (forall n, Not (p n))
