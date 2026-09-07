@@ -15,8 +15,6 @@ theorem BasicSierpinskian.eq_dne : forall (s1 s2 : BasicSierpinskian), ¬ (s1 �
   intros s1 s2 H
   cases s1; all_goals cases s2; all_goals simp_all
 
-#print BasicSierpinskian
-
 def BasicSierpinskian.not_indeterminate_decidable :
     forall (s : BasicSierpinskian), SumBool (s ≠ indeterminate) (¬ (s ≠ indeterminate)) := by
   intro s; cases s
@@ -186,8 +184,6 @@ theorem Sierpinskian.cases' : LPO -> forall (k : Sierpinskian),
     apply BasicSierpinskian.eq_dne
     apply allpn
 
-
-#check Sierpinskian.is_true
 
 theorem Sierpinskian.cases : LPO -> forall (k : Sierpinskian),
     k ≡ true ∨ k ≡ indeterminate := by

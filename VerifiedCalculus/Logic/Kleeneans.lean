@@ -32,7 +32,6 @@ theorem Tribool.not_indeterminate : forall (tb : Tribool),
   | indeterminate => contradiction
   | false => right; rfl
 
-#print Tribool
 
 def Tribool.implies' (tb1 tb2 : Tribool) : Tribool :=
   match tb1 with
@@ -52,7 +51,6 @@ def Tribool.implies (tb1 tb2 : Tribool) : Tribool :=
   | _, indeterminate => indeterminate
   | _, _ => false
 
-#check Tribool.implies
 
 def Tribool.not' (tb : Tribool) : Tribool :=
   match tb with
@@ -368,10 +366,3 @@ theorem QuotientKleenean.cases : LPO -> forall (qk : QuotientKleenean),
         unfold QuotientKleenean.false
         apply Quotient.sound
         exact Hf
-
-
-
-
-#print Classical.choose
-#print PSigma
-#print Sigma
