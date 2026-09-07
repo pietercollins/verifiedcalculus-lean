@@ -159,17 +159,17 @@ def Kleenean.true := Kleenean.mk (cnst .true) (cnst_is_monotone .true)
 def Kleenean.indeterminate := Kleenean.mk (cnst .indeterminate) (cnst_is_monotone .indeterminate)
 def Kleenean.false := Kleenean.mk (cnst .false) (cnst_is_monotone .false)
 
-def Kleenean.monotone_true : forall (seq : Nat -> Tribool), is_monotone seq →
+theorem Kleenean.monotone_true : forall (seq : Nat -> Tribool), is_monotone seq →
     forall m, (seq m = .true) -> (forall n, m <= n -> seq n = .true) := by
   unfold is_monotone; intros seq Hmono m Hm n Hle
   apply Tribool.refines_true; rewrite [← Hm]; exact Hmono m n Hle
 
-def Kleenean.monotone_false : forall (seq : Nat -> Tribool), is_monotone seq →
+theorem Kleenean.monotone_false : forall (seq : Nat -> Tribool), is_monotone seq →
     forall m, (seq m = .false) -> (forall n, m <= n -> seq n = .false) := by
   unfold is_monotone; intros seq Hmono m Hm n Hle
   apply Tribool.refines_false; rewrite [← Hm]; exact Hmono m n Hle
 
-def Kleenean.monotone_true_false : forall (seq : Nat -> Tribool), is_monotone seq →
+theorem Kleenean.monotone_true_false : forall (seq : Nat -> Tribool), is_monotone seq →
     forall m, (seq m ≠ Tribool.indeterminate) -> (forall n, m <= n -> seq n = seq m) := by
 /-
   unfold is_monotone; intros seq Hmono m Hm n Hle
@@ -209,7 +209,7 @@ theorem Kleenean.equivalent_trans : forall {k1 k2 k3 : Kleenean}, k1 ≡ k2 → 
   have Hm23le : m23 <= n := Nat.le_trans (Nat.le_max_right m12 m23) Hm13le
   exact Eq.trans (H12 n Hm12le) (H23 n Hm23le)
 
-def Kleenean.equivalence : Equivalence Kleenean.equivalent :=
+theorem Kleenean.equivalence : Equivalence Kleenean.equivalent :=
   Equivalence.mk Kleenean.equivalent_refl Kleenean.equivalent_symm Kleenean.equivalent_trans
 
 /-
@@ -220,6 +220,7 @@ def Keqv' : Equivalence Kleenean.equivalent := by
   exact Kleenean.equivalent_trans
 -/
 
+@[instance_reducible]
 def Kleenean.has_equiv : HasEquiv Kleenean :=
   HasEquiv.mk Kleenean.equivalent
 
@@ -349,20 +350,20 @@ theorem QuotientKleenean.cases : LPO -> forall (qk : QuotientKleenean),
   intro k
   have Kc := Kleenean.cases lpo k
   cases Kc
-  . case a.inl Ht =>
+  . case inl Ht =>
       left
       unfold QuotientKleenean.true
       apply Quotient.sound
       exact Ht
-  . case a.inr Hif =>
+  . case inr Hif =>
       right
       cases Hif
-      . case h.inl Hi =>
+      . case inl Hi =>
         left
         unfold QuotientKleenean.indeterminate
         apply Quotient.sound
         exact Hi
-      . case h.inr Hf =>
+      . case inr Hf =>
         right
         unfold QuotientKleenean.false
         apply Quotient.sound

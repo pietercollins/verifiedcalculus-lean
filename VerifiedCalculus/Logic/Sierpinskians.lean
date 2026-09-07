@@ -76,7 +76,7 @@ theorem Sierpinskian.cnst_is_monotone : forall (c : BasicSierpinskian), Sierpins
 def Sierpinskian.true := Sierpinskian.mk (cnst .true) (cnst_is_monotone .true)
 def Sierpinskian.indeterminate := Sierpinskian.mk (cnst .indeterminate) (cnst_is_monotone .indeterminate)
 
-def Sierpinskian.monotone_true : forall (seq : Nat -> BasicSierpinskian), is_monotone seq →
+theorem Sierpinskian.monotone_true : forall (seq : Nat -> BasicSierpinskian), is_monotone seq →
     forall m, (seq m = .true) -> (forall n, m <= n -> seq n = .true) := by
   unfold is_monotone; intros seq Hmono m Hm n Hle
   apply BasicSierpinskian.refines_true; rewrite [← Hm]; exact Hmono m n Hle
@@ -105,7 +105,7 @@ theorem Sierpinskian.equivalent_trans : forall {k1 k2 k3 : Sierpinskian}, k1 ≡
   have Hm23le : m23 <= n := Nat.le_trans (Nat.le_max_right m12 m23) Hm13le
   exact Eq.trans (H12 n Hm12le) (H23 n Hm23le)
 
-def Sierpinskian.equivalence : Equivalence Sierpinskian.equivalent :=
+theorem Sierpinskian.equivalence : Equivalence Sierpinskian.equivalent :=
   Equivalence.mk Sierpinskian.equivalent_refl Sierpinskian.equivalent_symm Sierpinskian.equivalent_trans
 
 /-
@@ -116,6 +116,7 @@ def Keqv' : Equivalence Sierpinskian.equivalent := by
   exact Sierpinskian.equivalent_trans
 -/
 
+@[instance_reducible]
 def Sierpinskian.has_equiv : HasEquiv Sierpinskian :=
   HasEquiv.mk Sierpinskian.equivalent
 
@@ -220,12 +221,12 @@ theorem QuotientSierpinskian.cases : LPO -> forall (qk : QuotientSierpinskian),
   intro k
   have Kc := Sierpinskian.cases lpo k
   cases Kc
-  . case a.inl Ht =>
+  . case inl Ht =>
       left
       unfold QuotientSierpinskian.true
       apply Quotient.sound
       exact Ht
-  . case a.inr Hif =>
+  . case inr Hif =>
       right
       unfold QuotientSierpinskian.indeterminate
       apply Quotient.sound
