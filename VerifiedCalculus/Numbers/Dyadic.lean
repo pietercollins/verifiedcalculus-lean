@@ -222,6 +222,24 @@ instance : AddGroup Dyadic where
   neg_add_cancel := Dyadic.neg_add_cancel
 
 
+theorem Dyadic.max_op (w1 w2 : Dyadic) : Dyadic.max w1 w2 = w1 ⊔ w2 := by
+  unfold Dyadic.max
+  rcases Dyadic.instDecidableLE w1 w2 with Hnw1lew2 | Hw1lew2
+  · have Hw2lew1 : w2 ≤ w1 := by exact Std.le_of_not_ge Hnw1lew2
+    rw [if_neg Hnw1lew2]
+    exact left_eq_sup.mpr Hw2lew1
+  · rw [if_pos Hw1lew2]
+    exact right_eq_sup.mpr Hw1lew2
+
+theorem Dyadic.min_op (w1 w2 : Dyadic) : Dyadic.min w1 w2 = w1 ⊓ w2 := by
+  unfold Dyadic.min
+  rcases Dyadic.instDecidableLE w1 w2 with Hnw1lew2 | Hw1lew2
+  · have Hw2lew1 : w2 ≤ w1 := by exact Std.le_of_not_ge Hnw1lew2
+    rw [if_neg Hnw1lew2]
+    exact right_eq_inf.mpr Hw2lew1
+  · rw [if_pos Hw1lew2]
+    exact left_eq_inf.mpr Hw1lew2
+
 theorem Dyadic.abs_of_nonneg : forall {w : Dyadic}, 0 ≤ w → |w| = w := by
   intros w H0lew
   unfold abs
@@ -238,13 +256,16 @@ theorem Dyadic.abs_of_nonpos : forall {w : Dyadic}, w ≤ 0 → |w| = -w := by
   · exact Dyadic.le_trans Hwle0 rfl
   · exact neg_nonneg.mpr Hwle0
 
+
 theorem Dyadic.abs_op (w : Dyadic) : Dyadic.abs w = abs w := by
+  unfold Dyadic.abs
   rcases Dyadic.instDecidableLE 0 w with Hn0lew | H0lew
   · have Hwle0 : w ≤ 0 := by exact Std.le_of_not_ge Hn0lew
+    rw [if_neg Hn0lew]
     rw [abs_of_nonpos Hwle0]
-    exact if_neg Hn0lew
-  · rw [abs_of_nonneg H0lew]
-    exact if_pos H0lew
+  · rw [if_pos H0lew]
+    rw [abs_of_nonneg H0lew]
+
 
 
 theorem Dyadic.abs_sgn : forall w : Dyadic, if 0 ≤ w then |w| = w else |w| = -w := by
@@ -283,7 +304,6 @@ theorem Dyadic.abs_eq_zero : forall w : Dyadic, |w| = 0 → w = 0 := by
 
 theorem Dyadic.abs_zero : |(0:Dyadic)| = 0 := by
   apply abs_of_nonneg; exact neg_nonpos_iff.mp rfl
-
 
 theorem Dyadic.abs_pos : forall w : Dyadic, 0 ≤ |w| := by
   intro w
@@ -613,5 +633,14 @@ theorem ble_iff_toRat' : ble x y ↔ x.toRat ≤ y.toRat := by
   simp only [ne_eq, blt_iff_toRat, Rat.not_lt]
 
 theorem toRat_le_toRat_iff' {x y : Dyadic} : x.toRat ≤ y.toRat ↔ x ≤ y := ble_iff_toRat.symm
+
+
+def w1 := Dyadic.mk 3 (-2)
+def w2 := Dyadic.mk 7 (-3)
+
+#eval w1.toRat
+#eval w2.toRat
+#eval (Dyadic.min w1 w2).toRat
+#eval  (w1 ⊓ w2).toRat
 
 end Dyadic
