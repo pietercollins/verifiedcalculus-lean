@@ -337,3 +337,100 @@ theorem Float64.exp_approx_down :
   apply div_down_correct _ _ H2ne0
 
 end Floats.Rounded
+
+
+namespace Floats.Specification
+
+#print Float.Model.Format
+#print Float.Model.Format.exponentBits
+#print Float.Model.Format.mantissaBitsWithoutImplicit
+#print Float.Model.Format.mantissaBits
+#print Float.Model.Format.Valid
+#print Float.Model.Format.numBits
+
+#check Float.Model.UnpackedFloat.unpackMantissa_packComponents
+
+open Float.Model
+open Float.Model.UnpackedFloat
+
+#print Fin
+#print BitVec
+#check unpackMantissa_packComponents
+#check unpackExponent_packComponents
+#check valid_pack
+
+def x : Float32 := 1.0625
+#eval x
+#eval x.toModel
+#eval Float32.ofModel (x.toModel)
+def ux := x.toModel.unpack
+def y : Float32 := 1048576.75
+#eval y
+def uy := y.toModel.unpack
+#eval ux
+
+#eval Format.binary32
+#eval Format.binary64
+
+#eval x.toDyadic
+
+#eval (x+y)
+def uz := UnpackedFloat.add Format.binary32 ux uy
+#eval uz
+#eval UnpackedFloat.pack Format.binary32 uz
+#eval Float32.Model.pack uz
+#eval Float32.ofModel (Float32.Model.pack uz)
+#eval Float32.ofModel (x.toModel + y.toModel)
+
+#eval (x+y).toDyadic
+#eval x.toDyadic + y.toDyadic
+
+#print Float32
+
+#eval x
+
+theorem float32_add_correct : forall x y : Float32,
+  x.add y = Float32.ofModel (x.toModel + y.toModel) :=
+by
+  intros x y
+  unfold Float32.add
+  rfl
+
+def Float.Model.UnpackedFloat.is_finite : UnpackedFloat → Prop
+  | .finite _ _ _ _ => True
+  | _ => False
+
+def Float.Model.UnpackedFloat.toDyadic (ux : UnpackedFloat)
+    (p : Float.Model.UnpackedFloat.is_finite ux) : Dyadic :=
+  match ux with
+  | .finite _s m e _ => Dyadic.shiftLeft (Dyadic.ofInt m) e
+  | _ => Dyadic.ofInt 0
+
+
+#eval ux
+
+theorem ux_finite : Float.Model.UnpackedFloat.is_finite ux := by
+  unfold Float.Model.UnpackedFloat.is_finite
+  unfold ux x
+  unfold Float32.toModel
+  unfold Float32.Model.unpack
+  sorry
+
+
+#eval! Float.Model.UnpackedFloat.toDyadic ux ux_finite
+#eval x.toDyadic
+
+theorem float32_to_dyadic_correct : forall x y : Float32,
+  1 ≤ x → x < 2 → 1 ≤ y → y < 2 → y < x →
+    (x-y).toDyadic = x.toDyadic - y.toDyadic :=
+by
+  sorry
+
+
+theorem float32_sub_unit_exact : forall x y : Float32,
+  1 ≤ x → x < 2 → 1 ≤ y → y < 2 → y < x →
+    (x-y).toDyadic = x.toDyadic - y.toDyadic :=
+by
+  sorry
+
+end Floats.Specification
