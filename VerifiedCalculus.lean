@@ -4,3 +4,5 @@ import VerifiedCalculus.Logic.TopologicalBasis
 import VerifiedCalculus.Logic.Omniscience
 import VerifiedCalculus.Logic.Sierpinskians
 import VerifiedCalculus.Logic.Kleeneans
+import VerifiedCalculus.Logic.SemiDecidable
+import VerifiedCalculus.Logic.QuasiDecidable
