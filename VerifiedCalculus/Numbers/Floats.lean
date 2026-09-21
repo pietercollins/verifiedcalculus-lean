@@ -100,6 +100,9 @@ class RoundedFloatOperations (𝔽 : Type) : Type where
   sub : Rounding → 𝔽 → 𝔽 → 𝔽
   mul : Rounding → 𝔽 → 𝔽 → 𝔽
   div : Rounding → 𝔽 → 𝔽 → 𝔽
+  min : 𝔽 → 𝔽 → 𝔽 := fun x1 x2 => if le x1 x2 then x1 else x2
+  max : 𝔽 → 𝔽 → 𝔽 := fun x1 x2 => if le x1 x2 then x2 else x1
+  zero := ofNat 0
 
 class RoundedFloatTheory {𝔽 : Type} [Flt : RoundedFloatOperations 𝔽] : Prop where
   ofNat_correct : ∀ n, Flt.toRat (Flt.ofNat n) = (n : ℚ)
@@ -112,6 +115,19 @@ class RoundedFloatTheory {𝔽 : Type} [Flt : RoundedFloatOperations 𝔽] : Pro
   div_correct : is_correctly_rounded_binary_nonzero Flt.ofNat Flt.toRat Flt.div Rat.div
   add_down_correct : ∀ x1 x2, Flt.toRat (Flt.add .down x1 x2) <= Flt.toRat x1 + Flt.toRat x2 :=
     fun x1 x2 => (add_correct x1 x2).down
+
+instance roundedFloatLE
+    {𝔽 : Type} [Flt : RoundedFloatOperations 𝔽] [@RoundedFloatTheory 𝔽 Flt] : LE 𝔽 where
+  le := fun x1 x2 ↦ Flt.le x1 x2 = true
+
+instance roundedFloatLEDecidable
+      {𝔽 : Type} [Flt : RoundedFloatOperations 𝔽] [@RoundedFloatTheory 𝔽 Flt] (x1 x2 : 𝔽)
+  : Decidable (x1 ≤ x2) := (RoundedFloatOperations.le x1 x2).decEq true
+
+instance roundedFloatNeg
+    {𝔽 : Type} [Flt : RoundedFloatOperations 𝔽] [@RoundedFloatTheory 𝔽 Flt] : Neg 𝔽 where
+  neg := Flt.neg
+
 
 def next_down (x : Float64) : Float64 := x - x.abs * Float64.eps
 def next_up (x : Float64) : Float64 := x + x.abs * Float64.eps
