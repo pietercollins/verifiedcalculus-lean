@@ -2,3 +2,5 @@ import VerifiedCalculus.Logic.SumBool
 import VerifiedCalculus.Logic.Omniscience
 import VerifiedCalculus.Logic.Sierpinskians
 import VerifiedCalculus.Logic.Kleeneans
+import VerifiedCalculus.Logic.SumSierpinskian
+import VerifiedCalculus.Logic.SumKleenean
