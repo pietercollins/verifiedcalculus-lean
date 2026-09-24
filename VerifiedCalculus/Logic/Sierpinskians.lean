@@ -8,25 +8,16 @@ import VerifiedCalculus.Logic.Omniscience
 
 inductive BasicSierpinskian : Type where | true | indeterminate
 
+instance : DecidableEq BasicSierpinskian := by
+  intros s1 s2; cases s1; all_goals cases s2; all_goals
+    first | right; rfl | left; intro; contradiction
+
 def BasicSierpinskian.definitely (s : BasicSierpinskian) : Bool :=
   match s with | true => Bool.true | _ => Bool.false
 
-theorem BasicSierpinskian.eq_dne : forall (s1 s2 : BasicSierpinskian), ¬ (s1 ≠ s2) → s1 = s2 := by
-  intros s1 s2 H
-  cases s1; all_goals cases s2; all_goals simp_all
-
-def BasicSierpinskian.not_indeterminate_decidable :
-    forall (s : BasicSierpinskian), SumBool (s ≠ indeterminate) (¬ (s ≠ indeterminate)) := by
-  intro s; cases s
-  . apply SumBool.case1; simp
-  . apply SumBool.case2; simp
-
 theorem BasicSierpinskian.not_indeterminate : forall (s : BasicSierpinskian),
      (s ≠ .indeterminate) → s = true := by
-  intros s H
-  cases s with
-  | true => rfl
-  | indeterminate => contradiction
+  intros s H; cases s with | true => rfl | indeterminate => contradiction
 
 
 def BasicSierpinskian.and (s1 s2 : BasicSierpinskian) : BasicSierpinskian :=
@@ -153,58 +144,32 @@ def Sierpinskian.LPO : Type :=
       SumBool (exists n, p n) (forall n, Not (p n))
 
 
-theorem Sierpinskian.cases' : LPO -> forall (k : Sierpinskian),
-    k ≡ true ∨ k ≡ indeterminate := by
-  intro lpo
-  intro k
-  let p := fun n : Nat => k.seq n ≠ .indeterminate
-  have pdec := fun n => BasicSierpinskian.not_indeterminate_decidable (k.seq n)
-  have q := lpo p pdec
-  clear lpo pdec
-  cases q
-  . case case1 expn =>
-      cases expn
-      . case _ m pm =>
-        unfold p at pm
-        cases Hkm : k.seq m with
-        | indeterminate => contradiction
-        | true =>
-          left
-          unfold Sierpinskian.equivalent
-          exists m
-          unfold true cnst; simp
-          apply Sierpinskian.monotone_true
-          exact k.mono
-          exact Hkm
-  . case case2 allpn =>
-    right
-    unfold Sierpinskian.equivalent
-    exists 0
-    intros n _
-    apply BasicSierpinskian.eq_dne
-    apply allpn
-
 
 theorem Sierpinskian.cases : LPO -> forall (k : Sierpinskian),
     k ≡ true ∨ k ≡ indeterminate := by
   intro lpo
   intro k
-  let p := fun n : Nat => k.seq n ≠ .indeterminate
-  have pdec := fun n => BasicSierpinskian.not_indeterminate_decidable (k.seq n)
+  let P (s : BasicSierpinskian) := s ≠ BasicSierpinskian.indeterminate
+  let PDec (s : BasicSierpinskian) : SumBool (P s) (¬ (P s)) := by
+    exact SumBool.ofDecidable (instDecidableNot)
+  let p := fun n : Nat => P (k.seq n)
+  have pdec := fun n => PDec (k.seq n)
   have q := lpo p pdec
-  clear lpo pdec
+  clear lpo pdec PDec
   unfold p at q
   cases q
   · case case1 Epm =>
-    have Etn : ∃ n, k.seq n = .true := by
-      cases Epm
-      · case intro n Hn => exists n; exact BasicSierpinskian.not_indeterminate (k.seq n) Hn
-    have Htf := Sierpinskian.is_true k Etn
-    left; assumption
+    left
+    apply Sierpinskian.is_true
+    cases Epm with | intro n Hn =>
+    exists n
+    exact BasicSierpinskian.not_indeterminate (k.seq n) Hn
   · case case2 Apn =>
     right
     apply Sierpinskian.is_indeterminate
-    intro n; apply BasicSierpinskian.eq_dne; exact Apn n
+    intro n
+    apply Decidable.of_not_not
+    exact Apn n
 
 def QuotientSierpinskian.true := QuotientSierpinskian.mk Sierpinskian.true
 def QuotientSierpinskian.indeterminate := QuotientSierpinskian.mk Sierpinskian.indeterminate

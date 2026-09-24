@@ -8,21 +8,22 @@ import VerifiedCalculus.Logic.Omniscience
 
 
 inductive Tribool : Type where | true | indeterminate | false
-def known : Bool -> Tribool :=
-  fun b => match b with | Bool.true => Tribool.true | Bool.false => Tribool.false
+
+instance : DecidableEq Tribool := by
+  intros s1 s2; cases s1 <;> cases s2 <;> first
+    | right; rfl | left; intro; contradiction
+
+def known (b : Bool) : Tribool :=
+  match b with | .true => Tribool.true | .false => Tribool.false
+
 def unknown : Tribool :=
   Tribool.indeterminate
 
-theorem Tribool.eq_dne : forall (tb1 tb2 : Tribool), ¬ (tb1 ≠ tb2) → tb1 = tb2 := by
-  intros tb1 tb2 H
-  cases tb1; all_goals cases tb2; all_goals simp_all
+def Tribool.definitely (tb : Tribool) : Bool :=
+  match tb with | true => Bool.true | _ => Bool.false
 
-def Tribool.not_indeterminate_decidable :
-    forall (tb : Tribool), SumBool (tb ≠ indeterminate) (¬ (tb ≠ indeterminate)) := by
-  intro tb; cases tb
-  . apply SumBool.case1; simp
-  . apply SumBool.case2; simp
-  . apply SumBool.case1; simp
+def Tribool.possibly (tb : Tribool) : Bool :=
+  match tb with | false => Bool.false | _ => Bool.true
 
 theorem Tribool.not_indeterminate : forall (tb : Tribool),
      (tb ≠ .indeterminate) → tb = true ∨ tb = false := by
@@ -273,57 +274,17 @@ def Kleenean.LPO : Type :=
     forall (_ : forall n : Nat, SumBool (p n) (Not (p n))),
       SumBool (exists n, p n) (forall n, Not (p n))
 
-
-theorem Kleenean.cases' : LPO -> forall (k : Kleenean),
-    k ≡ true ∨ k ≡ indeterminate ∨ k ≡ false := by
-  intro lpo
-  intro k
-  let p := fun n : Nat => k.seq n ≠ .indeterminate
-  have pdec := fun n => Tribool.not_indeterminate_decidable (k.seq n)
-  have q := lpo p pdec
-  clear lpo pdec
-  cases q
-  . case case1 expn =>
-      cases expn
-      . case _ m pm =>
-        unfold p at pm
-        cases Hkm : k.seq m with
-        | indeterminate => contradiction
-        | true =>
-          left
-          unfold Kleenean.equivalent
-          exists m
-          unfold true cnst; simp
-          rw [← Hkm]
-          apply monotone_true_false
-          exact k.mono
-          exact pm
-        | false =>
-          right; right
-          unfold Kleenean.equivalent
-          exists m
-          unfold false cnst; simp
-          rw [← Hkm]
-          apply monotone_true_false
-          exact k.mono
-          exact pm
-  . case case2 allpn =>
-    right; left
-    unfold Kleenean.equivalent
-    exists 0
-    intros n _
-    apply Tribool.eq_dne
-    apply allpn
-
-
 theorem Kleenean.cases : LPO -> forall (k : Kleenean),
     k ≡ true ∨ k ≡ indeterminate ∨ k ≡ false := by
   intro lpo
   intro k
-  let p := fun n : Nat => k.seq n ≠ .indeterminate
-  have pdec := fun n => Tribool.not_indeterminate_decidable (k.seq n)
+  let P (tb : Tribool) := tb ≠ Tribool.indeterminate
+  let PDec (tb : Tribool) : SumBool (P tb) (¬ (P tb)) := by
+    exact SumBool.ofDecidable (instDecidableNot)
+  let p := fun n : Nat => P (k.seq n)
+  have pdec := fun n => PDec (k.seq n)
   have q := lpo p pdec
-  clear lpo pdec
+  clear lpo pdec PDec
   unfold p at q
   cases q
   . case case1 Epm =>
@@ -334,7 +295,9 @@ theorem Kleenean.cases : LPO -> forall (k : Kleenean),
   . case case2 Apn =>
     right; left
     apply Kleenean.is_indeterminate
-    intro n; apply Tribool.eq_dne; exact Apn n
+    intro n
+    apply Decidable.of_not_not
+    exact Apn n
 
 def QuotientKleenean.true := QuotientKleenean.mk Kleenean.true
 def QuotientKleenean.false := QuotientKleenean.mk Kleenean.false

@@ -1,3 +1,4 @@
+import VerifiedCalculus.Logic.SumBool
 import VerifiedCalculus.Logic.Omniscience
 import VerifiedCalculus.Logic.Sierpinskians
 import VerifiedCalculus.Logic.Kleeneans
