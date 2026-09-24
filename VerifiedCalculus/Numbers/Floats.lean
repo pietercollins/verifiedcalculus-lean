@@ -72,6 +72,10 @@ def is_correct_unary {𝔽 : Type} (toRat : 𝔽 → ℚ)
     (fop : 𝔽 → 𝔽) (qop : ℚ → ℚ) : Prop :=
   ∀ x : 𝔽, toRat (fop x) = qop (toRat x)
 
+def is_correct_binary {𝔽 : Type} (toRat : 𝔽 → ℚ)
+    (fop : 𝔽 → 𝔽 → 𝔽) (qop : ℚ → ℚ → ℚ) : Prop :=
+  ∀ x1 x2 : 𝔽, toRat (fop x1 x2) = qop (toRat x1) (toRat x2)
+
 def is_correct_binary_predicate {𝔽 : Type} (toRat : 𝔽 → ℚ)
     (fpr : 𝔽 → 𝔽 → 𝔹) (qpr : ℚ → ℚ → Prop) : Prop :=
   ∀ x1 x2 : 𝔽, fpr x1 x2 ↔ qpr (toRat x1) (toRat x2)
@@ -106,6 +110,7 @@ class RoundedFloatOperations (𝔽 : Type) : Type where
 
 class RoundedFloatTheory {𝔽 : Type} [Flt : RoundedFloatOperations 𝔽] : Prop where
   ofNat_correct : ∀ n, Flt.toRat (Flt.ofNat n) = (n : ℚ)
+  zero_correct : Flt.toRat (Flt.zero) = (0 : ℚ)
   neg_correct : is_correct_unary Flt.toRat Flt.neg Rat.neg
   abs_correct : is_correct_unary Flt.toRat Flt.abs (fun q : ℚ ↦ |q|)
   le_correct :  is_correct_binary_predicate Flt.toRat Flt.le (fun q1 q2 : Rat ↦ q1 ≤ q2)
@@ -115,6 +120,8 @@ class RoundedFloatTheory {𝔽 : Type} [Flt : RoundedFloatOperations 𝔽] : Pro
   div_correct : is_correctly_rounded_binary_nonzero Flt.ofNat Flt.toRat Flt.div Rat.div
   add_down_correct : ∀ x1 x2, Flt.toRat (Flt.add .down x1 x2) <= Flt.toRat x1 + Flt.toRat x2 :=
     fun x1 x2 => (add_correct x1 x2).down
+  max_correct : is_correct_binary Flt.toRat Flt.max (fun q1 q2 : Rat ↦ max q1 q2) := by
+    sorry
 
 instance roundedFloatLE
     {𝔽 : Type} [Flt : RoundedFloatOperations 𝔽] [@RoundedFloatTheory 𝔽 Flt] : LE 𝔽 where
