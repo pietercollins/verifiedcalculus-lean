@@ -6,43 +6,44 @@ Authors: Pieter Collins
 
 import VerifiedCalculus.Logic.Omniscience
 
+
 inductive BasicSierpinskian : Type where | true | indeterminate
 
 instance : DecidableEq BasicSierpinskian := by
-  intros s1 s2; cases s1; all_goals cases s2; all_goals
+  intros bs1 bs2; cases bs1; all_goals cases bs2; all_goals
     first | right; rfl | left; intro; contradiction
 
-def BasicSierpinskian.definitely (s : BasicSierpinskian) : Bool :=
-  match s with | true => Bool.true | _ => Bool.false
+def BasicSierpinskian.definitely (bs : BasicSierpinskian) : Bool :=
+  match bs with | true => Bool.true | _ => Bool.false
 
-theorem BasicSierpinskian.not_indeterminate : forall (s : BasicSierpinskian),
-     (s ≠ .indeterminate) → s = true := by
-  intros s H; cases s with | true => rfl | indeterminate => contradiction
+theorem BasicSierpinskian.not_indeterminate : forall (bs : BasicSierpinskian),
+     (bs ≠ .indeterminate) → bs = true := by
+  intros bs H; cases bs with | true => rfl | indeterminate => contradiction
 
 
-def BasicSierpinskian.and (s1 s2 : BasicSierpinskian) : BasicSierpinskian :=
- match s1, s2 with
+def BasicSierpinskian.and (bs1 bs2 : BasicSierpinskian) : BasicSierpinskian :=
+ match bs1, bs2 with
   | true, true => true
   | _, _ => indeterminate
 
-theorem BasicSierpinskian.and_true : forall (s1 s2 : BasicSierpinskian),
-    and s1 s2 = true ↔ s1 = true ∧ s2 = true := by
-  unfold and; intros s1 s2; cases s1; all_goals cases s2; all_goals simp_all
+theorem BasicSierpinskian.and_true : forall (bs1 bs2 : BasicSierpinskian),
+    and bs1 bs2 = true ↔ bs1 = true ∧ bs2 = true := by
+  unfold and; intros bs1 bs2; cases bs1; all_goals cases bs2; all_goals simp_all
 
-def BasicSierpinskian.or (s1 s2 : BasicSierpinskian) : BasicSierpinskian :=
- match s1, s2 with
+def BasicSierpinskian.or (bs1 bs2 : BasicSierpinskian) : BasicSierpinskian :=
+ match bs1, bs2 with
   | indeterminate, indeterminate => indeterminate
   | _, _ => true
 
-theorem BasicSierpinskian.or_true : forall (s1 s2 : BasicSierpinskian),
-    or s1 s2 = true ↔ s1 = true ∨ s2 = true := by
-  unfold or; intros s1 s2; cases s1; all_goals cases s2; all_goals simp_all
+theorem BasicSierpinskian.or_true : forall (bs1 bs2 : BasicSierpinskian),
+    or bs1 bs2 = true ↔ bs1 = true ∨ bs2 = true := by
+  unfold or; intros bs1 bs2; cases bs1; all_goals cases bs2; all_goals simp_all
 
-def BasicSierpinskian.refines (s1 s2 : BasicSierpinskian) : Prop :=
-  match s2 with | indeterminate => True | _ => s1 = s2
+def BasicSierpinskian.refines (bs1 bs2 : BasicSierpinskian) : Prop :=
+  match bs2 with | indeterminate => True | _ => bs1 = bs2
 
-theorem BasicSierpinskian.refines_true : forall s, refines s true -> s = true := by
-  unfold refines; intros s H; cases s; all_goals simp_all
+theorem BasicSierpinskian.refines_true : forall bs, refines bs true -> bs = true := by
+  unfold refines; intros bs H; cases bs; all_goals simp_all
 
 def Sierpinskian.is_monotone (seq : Nat -> BasicSierpinskian) : Prop :=
   forall (m n : Nat), m <= n -> BasicSierpinskian.refines (seq n) (seq m)
@@ -71,21 +72,21 @@ theorem Sierpinskian.monotone_true : forall (seq : Nat -> BasicSierpinskian), is
   apply BasicSierpinskian.refines_true; rewrite [← Hm]; exact Hmono m n Hle
 
 
-def Sierpinskian.equivalent (k1 k2 : Sierpinskian) : Prop :=
-  exists m, forall n, m <= n -> k1.seq n = k2.seq n
+def Sierpinskian.equivalent (s1 s2 : Sierpinskian) : Prop :=
+  exists m, forall n, m <= n -> s1.seq n = s2.seq n
 
 local infix:90 (name := eqvOp) " ≡ " => Sierpinskian.equivalent
 local infix:90 " ≈ " => Sierpinskian.equivalent
 
-theorem Sierpinskian.equivalent_refl : forall k : Sierpinskian, k ≡ k := by
-  intros k; exists 0; intros n Hle; exact Eq.refl (k.seq n)
-theorem Sierpinskian.equivalent_symm : forall { k1 k2 : Sierpinskian }, k1 ≡ k2 → k2 ≡ k1 := by
+theorem Sierpinskian.equivalent_refl : forall s : Sierpinskian, s ≡ s := by
+  intros s; exists 0; intros n Hle; exact Eq.refl (s.seq n)
+theorem Sierpinskian.equivalent_symm : forall { s1 s2 : Sierpinskian }, s1 ≡ s2 → s2 ≡ s1 := by
   unfold Sierpinskian.equivalent; simp
-  intros k1 k2 m H12; exists m; intros n Hle
+  intros s1 s2 m H12; exists m; intros n Hle
   exact Eq.symm (H12 n Hle)
-theorem Sierpinskian.equivalent_trans : forall {k1 k2 k3 : Sierpinskian}, k1 ≡ k2 → k2 ≡ k3 → k1 ≡ k3 := by
+theorem Sierpinskian.equivalent_trans : forall {s1 s2 s3 : Sierpinskian}, s1 ≡ s2 → s2 ≡ s3 → s1 ≡ s3 := by
   unfold Sierpinskian.equivalent
-  intros k1 k2 k3 H12 H23
+  intros s1 s2 s3 H12 H23
   cases H12 with | intro m12 H12 =>
   cases H23 with | intro m23 H23 =>
   let m13 := max m12 m23; exists m13
@@ -123,17 +124,17 @@ def Sierpinskian.setoid : Setoid Sierpinskian := by
   exact Sierpinskian.equivalence
 -/
 
-theorem Sierpinskian.is_true : forall (k : Sierpinskian),
-    (exists (m : Nat), k.seq m = .true) → k ≡ true := by
+theorem Sierpinskian.is_true : forall (s : Sierpinskian),
+    (exists (m : Nat), s.seq m = .true) → s ≡ true := by
   unfold Sierpinskian.equivalent Sierpinskian.true Sierpinskian.cnst
-  intros k Em
+  intros s Em
   cases Em with | intro m Hm =>
-  exists m; exact monotone_true k.seq k.mono m Hm
+  exists m; exact monotone_true s.seq s.mono m Hm
 
-theorem Sierpinskian.is_indeterminate : forall (k : Sierpinskian),
-    (forall n, k.seq n = BasicSierpinskian.indeterminate) → k ≡ Sierpinskian.indeterminate := by
+theorem Sierpinskian.is_indeterminate : forall (s : Sierpinskian),
+    (forall n, s.seq n = BasicSierpinskian.indeterminate) → s ≡ Sierpinskian.indeterminate := by
   unfold Sierpinskian.equivalent Sierpinskian.indeterminate cnst
-  intros k Hm; exists 0; simp; assumption
+  intros s Hm; exists 0; simp; assumption
 
 
 
@@ -145,15 +146,15 @@ def Sierpinskian.LPO : Type :=
 
 
 
-theorem Sierpinskian.cases : LPO -> forall (k : Sierpinskian),
-    k ≡ true ∨ k ≡ indeterminate := by
+theorem Sierpinskian.cases : LPO -> forall (s : Sierpinskian),
+    s ≡ true ∨ s ≡ indeterminate := by
   intro lpo
-  intro k
-  let P (s : BasicSierpinskian) := s ≠ BasicSierpinskian.indeterminate
-  let PDec (s : BasicSierpinskian) : SumBool (P s) (¬ (P s)) := by
+  intro s
+  let P (bs : BasicSierpinskian) := bs ≠ BasicSierpinskian.indeterminate
+  let PDec (bs : BasicSierpinskian) : SumBool (P bs) (¬ (P bs)) := by
     exact SumBool.ofDecidable (instDecidableNot)
-  let p := fun n : Nat => P (k.seq n)
-  have pdec := fun n => PDec (k.seq n)
+  let p := fun n : Nat => P (s.seq n)
+  have pdec := fun n => PDec (s.seq n)
   have q := lpo p pdec
   clear lpo pdec PDec
   unfold p at q
@@ -163,7 +164,7 @@ theorem Sierpinskian.cases : LPO -> forall (k : Sierpinskian),
     apply Sierpinskian.is_true
     cases Epm with | intro n Hn =>
     exists n
-    exact BasicSierpinskian.not_indeterminate (k.seq n) Hn
+    exact BasicSierpinskian.not_indeterminate (s.seq n) Hn
   · case case2 Apn =>
     right
     apply Sierpinskian.is_indeterminate
@@ -175,12 +176,12 @@ def QuotientSierpinskian.true := QuotientSierpinskian.mk Sierpinskian.true
 def QuotientSierpinskian.indeterminate := QuotientSierpinskian.mk Sierpinskian.indeterminate
 
 
-theorem QuotientSierpinskian.cases : LPO -> forall (qk : QuotientSierpinskian),
-    qk = QuotientSierpinskian.true ∨ qk = QuotientSierpinskian.indeterminate := by
+theorem QuotientSierpinskian.cases : LPO -> forall (qs : QuotientSierpinskian),
+    qs = QuotientSierpinskian.true ∨ qs = QuotientSierpinskian.indeterminate := by
   intro lpo
   apply Quotient.ind
-  intro k
-  have Kc := Sierpinskian.cases lpo k
+  intro s
+  have Kc := Sierpinskian.cases lpo s
   cases Kc
   . case inl Ht =>
       left

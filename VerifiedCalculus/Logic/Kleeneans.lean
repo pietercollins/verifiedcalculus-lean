@@ -7,45 +7,45 @@ Authors: Pieter Collins
 import VerifiedCalculus.Logic.Omniscience
 
 
-inductive Tribool : Type where | true | indeterminate | false
+inductive BasicKleenean : Type where | true | indeterminate | false
 
-instance : DecidableEq Tribool := by
-  intros s1 s2; cases s1 <;> cases s2 <;> first
+instance : DecidableEq BasicKleenean := by
+  intros bk1 bk2; cases bk1 <;> cases bk2 <;> first
     | right; rfl | left; intro; contradiction
 
-def known (b : Bool) : Tribool :=
-  match b with | .true => Tribool.true | .false => Tribool.false
+def known (b : Bool) : BasicKleenean :=
+  match b with | .true => BasicKleenean.true | .false => BasicKleenean.false
 
-def unknown : Tribool :=
-  Tribool.indeterminate
+def unknown : BasicKleenean :=
+  BasicKleenean.indeterminate
 
-def Tribool.definitely (tb : Tribool) : Bool :=
-  match tb with | true => Bool.true | _ => Bool.false
+def BasicKleenean.definitely (bk : BasicKleenean) : Bool :=
+  match bk with | true => Bool.true | _ => Bool.false
 
-def Tribool.possibly (tb : Tribool) : Bool :=
-  match tb with | false => Bool.false | _ => Bool.true
+def BasicKleenean.possibly (bk : BasicKleenean) : Bool :=
+  match bk with | false => Bool.false | _ => Bool.true
 
-theorem Tribool.not_indeterminate : forall (tb : Tribool),
-     (tb ≠ .indeterminate) → tb = true ∨ tb = false := by
-  intros tb H
-  cases tb with
+theorem BasicKleenean.not_indeterminate : forall (bk : BasicKleenean),
+     (bk ≠ .indeterminate) → bk = true ∨ bk = false := by
+  intros bk H
+  cases bk with
   | true => left; rfl
   | indeterminate => contradiction
   | false => right; rfl
 
 
-def Tribool.implies' (tb1 tb2 : Tribool) : Tribool :=
-  match tb1 with
+def BasicKleenean.implies' (bk1 bk2 : BasicKleenean) : BasicKleenean :=
+  match bk1 with
   | indeterminate =>
-      match tb2 with
+      match bk2 with
       | true => true
       | indeterminate => indeterminate
       | false => indeterminate
   | false => true
-  | true => tb2
+  | true => bk2
 
-def Tribool.implies (tb1 tb2 : Tribool) : Tribool :=
-  match tb1, tb2 with
+def BasicKleenean.implies (bk1 bk2 : BasicKleenean) : BasicKleenean :=
+  match bk1, bk2 with
   | false, _ => true
   | _, true => true
   | indeterminate, _ => indeterminate
@@ -53,103 +53,103 @@ def Tribool.implies (tb1 tb2 : Tribool) : Tribool :=
   | _, _ => false
 
 
-def Tribool.not' (tb : Tribool) : Tribool :=
-  match tb with
+def BasicKleenean.not' (bk : BasicKleenean) : BasicKleenean :=
+  match bk with
   | false => true
   | indeterminate => indeterminate
   | true => false
 
-def Tribool.not (tb : Tribool) : Tribool :=
-  Tribool.implies tb Tribool.false
+def BasicKleenean.not (bk : BasicKleenean) : BasicKleenean :=
+  BasicKleenean.implies bk BasicKleenean.false
 
-theorem Tribool.not_not_id : forall (tb : Tribool), not (not tb) = tb := by
-  unfold not implies; intros tb; cases tb; all_goals simp_all
+theorem BasicKleenean.not_not_id : forall (bk : BasicKleenean), not (not bk) = bk := by
+  unfold not implies; intros bk; cases bk; all_goals simp_all
 
-theorem Tribool.not_true : forall (tb : Tribool), not tb = true <-> tb = false := by
-  unfold not implies;intros tb; cases tb; all_goals simp_all
+theorem BasicKleenean.not_true : forall (bk : BasicKleenean), not bk = true <-> bk = false := by
+  unfold not implies;intros bk; cases bk; all_goals simp_all
 
-theorem Tribool.not_false : forall (tb : Tribool), not tb = false <-> tb = true := by
-  unfold not implies; intros tb; cases tb; all_goals simp_all
+theorem BasicKleenean.not_false : forall (bk : BasicKleenean), not bk = false <-> bk = true := by
+  unfold not implies; intros bk; cases bk; all_goals simp_all
 
 
-theorem Tribool.implies_true : forall (tb1 tb2 : Tribool),
-    implies tb1 tb2 = true ↔ tb1 = false ∨ tb2 = true := by
+theorem BasicKleenean.implies_true : forall (bk1 bk2 : BasicKleenean),
+    implies bk1 bk2 = true ↔ bk1 = false ∨ bk2 = true := by
   unfold implies
-  intros tb1 tb2; cases tb1; all_goals cases tb2; all_goals simp_all
+  intros bk1 bk2; cases bk1; all_goals cases bk2; all_goals simp_all
 
-theorem Tribool.implies_false : forall (tb1 tb2 : Tribool),
-    implies tb1 tb2 = false ↔ tb1 = true ∧ tb2 = false := by
+theorem BasicKleenean.implies_false : forall (bk1 bk2 : BasicKleenean),
+    implies bk1 bk2 = false ↔ bk1 = true ∧ bk2 = false := by
   unfold implies
-  intros tb1 tb2; cases tb1; all_goals cases tb2; all_goals simp_all
+  intros bk1 bk2; cases bk1; all_goals cases bk2; all_goals simp_all
 
 
-def Tribool.and (tb1 tb2 : Tribool) : Tribool :=
-  not (implies tb1 (not tb2))
+def BasicKleenean.and (bk1 bk2 : BasicKleenean) : BasicKleenean :=
+  not (implies bk1 (not bk2))
 
-theorem Tribool.and_true : forall (tb1 tb2 : Tribool),
-    and tb1 tb2 = true ↔ tb1 = true ∧ tb2 = true := by
+theorem BasicKleenean.and_true : forall (bk1 bk2 : BasicKleenean),
+    and bk1 bk2 = true ↔ bk1 = true ∧ bk2 = true := by
   unfold and not implies
-  intros tb1 tb2; cases tb1; all_goals cases tb2; all_goals simp_all
+  intros bk1 bk2; cases bk1; all_goals cases bk2; all_goals simp_all
 
-theorem Tribool.and_false : forall (tb1 tb2 : Tribool),
-    and tb1 tb2 = false ↔ tb1 = false ∨ tb2 = false := by
+theorem BasicKleenean.and_false : forall (bk1 bk2 : BasicKleenean),
+    and bk1 bk2 = false ↔ bk1 = false ∨ bk2 = false := by
   unfold and not implies
-  intros tb1 tb2; cases tb1; all_goals cases tb2; all_goals simp_all
+  intros bk1 bk2; cases bk1; all_goals cases bk2; all_goals simp_all
 
 
-def Tribool.or (tb1 tb2 : Tribool) : Tribool :=
-  implies (not tb1) tb2
+def BasicKleenean.or (bk1 bk2 : BasicKleenean) : BasicKleenean :=
+  implies (not bk1) bk2
 
-theorem Tribool.or_true : forall (tb1 tb2 : Tribool),
-    or tb1 tb2 = true ↔ tb1 = true ∨ tb2 = true := by
+theorem BasicKleenean.or_true : forall (bk1 bk2 : BasicKleenean),
+    or bk1 bk2 = true ↔ bk1 = true ∨ bk2 = true := by
   unfold or not implies
-  intros tb1 tb2; cases tb1; all_goals cases tb2; all_goals simp_all
+  intros bk1 bk2; cases bk1; all_goals cases bk2; all_goals simp_all
 
-theorem Tribool.or_false : forall (tb1 tb2 : Tribool),
-    or tb1 tb2 = false ↔ tb1 = false ∧ tb2 = false := by
+theorem BasicKleenean.or_false : forall (bk1 bk2 : BasicKleenean),
+    or bk1 bk2 = false ↔ bk1 = false ∧ bk2 = false := by
   unfold or not implies
-  intros tb1 tb2; cases tb1; all_goals cases tb2; all_goals simp_all
+  intros bk1 bk2; cases bk1; all_goals cases bk2; all_goals simp_all
 
 
-def Tribool.iff (tb1 tb2 : Tribool) : Tribool :=
-  and (implies tb1 tb2) (implies tb2 tb1)
+def BasicKleenean.iff (bk1 bk2 : BasicKleenean) : BasicKleenean :=
+  and (implies bk1 bk2) (implies bk2 bk1)
 
-theorem Tribool.iff_true : forall (tb1 tb2 : Tribool),
-    iff tb1 tb2 = true ↔ (tb1 = true ∧ tb2 = true) ∨ (tb1 = false ∧ tb2 = false) := by
+theorem BasicKleenean.iff_true : forall (bk1 bk2 : BasicKleenean),
+    iff bk1 bk2 = true ↔ (bk1 = true ∧ bk2 = true) ∨ (bk1 = false ∧ bk2 = false) := by
   unfold iff and not implies
-  intros tb1 tb2; cases tb1; all_goals cases tb2; all_goals simp_all
+  intros bk1 bk2; cases bk1; all_goals cases bk2; all_goals simp_all
 
-theorem Tribool.iff_false : forall (tb1 tb2 : Tribool),
-    iff tb1 tb2 = false ↔ (tb1 = false ∧ tb2 = true) ∨ (tb1 = true ∧ tb2 = false) := by
+theorem BasicKleenean.iff_false : forall (bk1 bk2 : BasicKleenean),
+    iff bk1 bk2 = false ↔ (bk1 = false ∧ bk2 = true) ∨ (bk1 = true ∧ bk2 = false) := by
   unfold iff and not implies
-  intros tb1 tb2; cases tb1; all_goals cases tb2; all_goals simp_all
+  intros bk1 bk2; cases bk1; all_goals cases bk2; all_goals simp_all
 
 
-def Tribool.refines (tb1 tb2 : Tribool) : Prop :=
-  match tb2 with | indeterminate => True | _ => tb1 = tb2
+def BasicKleenean.refines (bk1 bk2 : BasicKleenean) : Prop :=
+  match bk2 with | indeterminate => True | _ => bk1 = bk2
 
-theorem Tribool.refines_true : forall tb, refines tb true -> tb = true := by
-  unfold refines; intros tb H; cases tb; all_goals simp_all
-theorem Tribool.refines_false : forall tb, refines tb false -> tb = false := by
-  unfold refines; intros tb H; cases tb; all_goals simp_all
-theorem Tribool.refines_true_false : forall tb1 tb2,
-    (tb1 = true ∨ tb1 = false) → refines tb2 tb1 → tb2 = tb1 := by
-  unfold refines; intros tb1 tb2 Htf Hr; cases tb1; all_goals cases tb2; all_goals simp_all
+theorem BasicKleenean.refines_true : forall bk, refines bk true -> bk = true := by
+  unfold refines; intros bk H; cases bk; all_goals simp_all
+theorem BasicKleenean.refines_false : forall bk, refines bk false -> bk = false := by
+  unfold refines; intros bk H; cases bk; all_goals simp_all
+theorem BasicKleenean.refines_true_false : forall bk1 bk2,
+    (bk1 = true ∨ bk1 = false) → refines bk2 bk1 → bk2 = bk1 := by
+  unfold refines; intros bk1 bk2 Htf Hr; cases bk1; all_goals cases bk2; all_goals simp_all
 
-def is_monotone (seq : Nat -> Tribool) : Prop :=
-  forall (m n : Nat), m <= n -> Tribool.refines (seq n) (seq m)
+def is_monotone (seq : Nat -> BasicKleenean) : Prop :=
+  forall (m n : Nat), m <= n -> BasicKleenean.refines (seq n) (seq m)
 
 structure Kleenean where
   mk ::
-    seq : Nat -> Tribool
+    seq : Nat -> BasicKleenean
     mono : is_monotone seq
 
 
-def Kleenean.cnst (c : Tribool) := fun (_ : Nat) => c
+def Kleenean.cnst (c : BasicKleenean) := fun (_ : Nat) => c
 
-theorem Kleenean.cnst_is_monotone : forall (c : Tribool), is_monotone (cnst c) := by
+theorem Kleenean.cnst_is_monotone : forall (c : BasicKleenean), is_monotone (cnst c) := by
   with_unfolding_all
-  unfold cnst is_monotone Tribool.refines
+  unfold cnst is_monotone BasicKleenean.refines
   intros c m n H
   cases c
   all_goals simp_all
@@ -158,26 +158,26 @@ def Kleenean.true := Kleenean.mk (cnst .true) (cnst_is_monotone .true)
 def Kleenean.indeterminate := Kleenean.mk (cnst .indeterminate) (cnst_is_monotone .indeterminate)
 def Kleenean.false := Kleenean.mk (cnst .false) (cnst_is_monotone .false)
 
-theorem Kleenean.monotone_true : forall (seq : Nat -> Tribool), is_monotone seq →
+theorem Kleenean.monotone_true : forall (seq : Nat -> BasicKleenean), is_monotone seq →
     forall m, (seq m = .true) -> (forall n, m <= n -> seq n = .true) := by
   unfold is_monotone; intros seq Hmono m Hm n Hle
-  apply Tribool.refines_true; rewrite [← Hm]; exact Hmono m n Hle
+  apply BasicKleenean.refines_true; rewrite [← Hm]; exact Hmono m n Hle
 
-theorem Kleenean.monotone_false : forall (seq : Nat -> Tribool), is_monotone seq →
+theorem Kleenean.monotone_false : forall (seq : Nat -> BasicKleenean), is_monotone seq →
     forall m, (seq m = .false) -> (forall n, m <= n -> seq n = .false) := by
   unfold is_monotone; intros seq Hmono m Hm n Hle
-  apply Tribool.refines_false; rewrite [← Hm]; exact Hmono m n Hle
+  apply BasicKleenean.refines_false; rewrite [← Hm]; exact Hmono m n Hle
 
-theorem Kleenean.monotone_true_false : forall (seq : Nat -> Tribool), is_monotone seq →
-    forall m, (seq m ≠ Tribool.indeterminate) -> (forall n, m <= n -> seq n = seq m) := by
+theorem Kleenean.monotone_true_false : forall (seq : Nat -> BasicKleenean), is_monotone seq →
+    forall m, (seq m ≠ BasicKleenean.indeterminate) -> (forall n, m <= n -> seq n = seq m) := by
 /-
   unfold is_monotone; intros seq Hmono m Hm n Hle
-  apply Tribool.refines_true_false
-  . apply Tribool.not_indeterminate; exact Hm
+  apply BasicKleenean.refines_true_false
+  . apply BasicKleenean.not_indeterminate; exact Hm
   . exact Hmono m n Hle
 -/
   intros seq Hmono m Hm
-  cases Tribool.not_indeterminate _ Hm
+  cases BasicKleenean.not_indeterminate _ Hm
   . case inl Ht =>
     intros n Hle; rewrite [Ht]
     exact monotone_true seq Hmono m Ht n Hle
@@ -255,14 +255,14 @@ theorem Kleenean.is_true_or_false : forall (k : Kleenean),
   unfold Kleenean.equivalent
   intros k Em
   cases Em with | intro m Hm =>
-  have Hm' := Tribool.not_indeterminate _ Hm
+  have Hm' := BasicKleenean.not_indeterminate _ Hm
   have Htf := monotone_true_false k.seq k.mono m Hm
   cases Hm' with
   | inl Hmt => left; exists m; rw [Hmt] at Htf; unfold true cnst; exact Htf
   | inr Hmf => right; exists m; rw [Hmf] at Htf; unfold false cnst; exact Htf
 
 theorem Kleenean.is_indeterminate : forall (k : Kleenean),
-    (forall n, k.seq n = Tribool.indeterminate) → k ≡ Kleenean.indeterminate := by
+    (forall n, k.seq n = BasicKleenean.indeterminate) → k ≡ Kleenean.indeterminate := by
   unfold Kleenean.equivalent Kleenean.indeterminate cnst
   intros k Hm; exists 0; simp; assumption
 
@@ -278,8 +278,8 @@ theorem Kleenean.cases : LPO -> forall (k : Kleenean),
     k ≡ true ∨ k ≡ indeterminate ∨ k ≡ false := by
   intro lpo
   intro k
-  let P (tb : Tribool) := tb ≠ Tribool.indeterminate
-  let PDec (tb : Tribool) : SumBool (P tb) (¬ (P tb)) := by
+  let P (bk : BasicKleenean) := bk ≠ BasicKleenean.indeterminate
+  let PDec (bk : BasicKleenean) : SumBool (P bk) (¬ (P bk)) := by
     exact SumBool.ofDecidable (instDecidableNot)
   let p := fun n : Nat => P (k.seq n)
   have pdec := fun n => PDec (k.seq n)
