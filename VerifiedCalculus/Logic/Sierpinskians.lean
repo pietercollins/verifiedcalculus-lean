@@ -4,6 +4,7 @@ Released under the GNU GPLv3 as described in the file LICENSE.
 Authors: Pieter Collins
 -/
 
+import VerifiedCalculus.Logic.TopologicalBasis
 import VerifiedCalculus.Logic.Omniscience
 
 
@@ -42,26 +43,38 @@ theorem BasicSierpinskian.or_true : forall (bs1 bs2 : BasicSierpinskian),
 def BasicSierpinskian.refines (bs1 bs2 : BasicSierpinskian) : Prop :=
   match bs2 with | indeterminate => True | _ => bs1 = bs2
 
+theorem BasicSierpinskian.refines_refl : forall bs : BasicSierpinskian,
+    refines bs bs := by
+  unfold refines; grind
+
+theorem BasicSierpinskian.refines_trans : forall {bs1 bs3} (bs2 : BasicSierpinskian),
+    refines bs1 bs2 → refines bs2 bs3 → refines bs1 bs3 := by
+  unfold refines; grind
+
+instance : TopologicalBasis.Basis BasicSierpinskian where
+  refines := BasicSierpinskian.refines
+  refines_refl := BasicSierpinskian.refines_refl
+  refines_trans := BasicSierpinskian.refines_trans
+
 theorem BasicSierpinskian.refines_true : forall bs, refines bs true -> bs = true := by
   unfold refines; intros bs H; cases bs; all_goals simp_all
 
-def Sierpinskian.is_monotone (seq : Nat -> BasicSierpinskian) : Prop :=
-  forall (m n : Nat), m <= n -> BasicSierpinskian.refines (seq n) (seq m)
 
 structure Sierpinskian where
   mk ::
     seq : Nat -> BasicSierpinskian
-    mono : Sierpinskian.is_monotone seq
+    mono : TopologicalBasis.is_monotone seq
 
+abbrev Sierpinskian.is_monotone := @TopologicalBasis.is_monotone BasicSierpinskian
 
 def Sierpinskian.cnst (c : BasicSierpinskian) := fun (_ : Nat) => c
 
-theorem Sierpinskian.cnst_is_monotone : forall (c : BasicSierpinskian), Sierpinskian.is_monotone (cnst c) := by
+theorem Sierpinskian.cnst_is_monotone : forall (c : BasicSierpinskian), TopologicalBasis.is_monotone (cnst c) := by
   with_unfolding_all
-  unfold cnst is_monotone BasicSierpinskian.refines
+  unfold cnst TopologicalBasis.is_monotone
   intros c m n H
-  cases c
-  all_goals simp_all
+  simp
+  exact TopologicalBasis.Basis.refines_refl c
 
 def Sierpinskian.true := Sierpinskian.mk (cnst .true) (cnst_is_monotone .true)
 def Sierpinskian.indeterminate := Sierpinskian.mk (cnst .indeterminate) (cnst_is_monotone .indeterminate)
@@ -124,14 +137,39 @@ def Sierpinskian.setoid : Setoid Sierpinskian := by
   exact Sierpinskian.equivalence
 -/
 
-theorem Sierpinskian.is_true : forall (s : Sierpinskian),
+
+private def Sierpinskian.true_from' (seq : Nat → BasicSierpinskian) : Nat → BasicSierpinskian :=
+  fun n ↦ match n with
+  | Nat.zero => seq n
+  | Nat.succ m =>
+     match true_from' seq m with
+     | .indeterminate => seq n
+     | _ => true_from' seq m
+
+private theorem Sierpinskian.true_from_monotone (seq : Nat → BasicSierpinskian)
+  : Sierpinskian.is_monotone (true_from' seq) :=
+by
+  unfold is_monotone
+  apply (TopologicalBasis.weak_monotone_iff_strong_monotone _).mp
+  intro m
+  let sm := true_from' seq m; have Esm : sm = true_from' seq m := by rfl
+  rw [←Esm]; unfold true_from'; rw [←Esm]
+  cases sm
+  · case true => simp; exact BasicSierpinskian.refines_refl .true
+  · case indeterminate => simp; exact True.intro
+
+def Sierpinskian.true_from (s : Nat → BasicSierpinskian) : Sierpinskian :=
+  Sierpinskian.mk (true_from' s) (true_from_monotone s)
+
+
+theorem Sierpinskian.when_true : forall (s : Sierpinskian),
     (exists (m : Nat), s.seq m = .true) → s ≡ true := by
   unfold Sierpinskian.equivalent Sierpinskian.true Sierpinskian.cnst
   intros s Em
   cases Em with | intro m Hm =>
   exists m; exact monotone_true s.seq s.mono m Hm
 
-theorem Sierpinskian.is_indeterminate : forall (s : Sierpinskian),
+theorem Sierpinskian.when_indeterminate : forall (s : Sierpinskian),
     (forall n, s.seq n = BasicSierpinskian.indeterminate) → s ≡ Sierpinskian.indeterminate := by
   unfold Sierpinskian.equivalent Sierpinskian.indeterminate cnst
   intros s Hm; exists 0; simp; assumption
@@ -161,13 +199,13 @@ theorem Sierpinskian.cases : LPO -> forall (s : Sierpinskian),
   cases q
   · case case1 Epm =>
     left
-    apply Sierpinskian.is_true
+    apply Sierpinskian.when_true
     cases Epm with | intro n Hn =>
     exists n
     exact BasicSierpinskian.not_indeterminate (s.seq n) Hn
   · case case2 Apn =>
     right
-    apply Sierpinskian.is_indeterminate
+    apply Sierpinskian.when_indeterminate
     intro n
     apply Decidable.of_not_not
     exact Apn n

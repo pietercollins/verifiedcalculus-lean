@@ -4,6 +4,7 @@ Released under the GNU GPLv3 as described in the file LICENSE.
 Authors: Pieter Collins
 -/
 
+import VerifiedCalculus.Logic.TopologicalBasis
 import VerifiedCalculus.Logic.Omniscience
 
 
@@ -128,6 +129,19 @@ theorem BasicKleenean.iff_false : forall (bk1 bk2 : BasicKleenean),
 def BasicKleenean.refines (bk1 bk2 : BasicKleenean) : Prop :=
   match bk2 with | indeterminate => True | _ => bk1 = bk2
 
+theorem BasicKleenean.refines_refl : forall bk : BasicKleenean,
+    refines bk bk := by
+  unfold refines; grind
+
+theorem BasicKleenean.refines_trans : forall {bk1 bk3} (bk2 : BasicKleenean),
+    refines bk1 bk2 → refines bk2 bk3 → refines bk1 bk3 := by
+  unfold refines; grind
+
+instance : TopologicalBasis.Basis BasicKleenean where
+  refines := BasicKleenean.refines
+  refines_refl := BasicKleenean.refines_refl
+  refines_trans := BasicKleenean.refines_trans
+
 theorem BasicKleenean.refines_true : forall bk, refines bk true -> bk = true := by
   unfold refines; intros bk H; cases bk; all_goals simp_all
 theorem BasicKleenean.refines_false : forall bk, refines bk false -> bk = false := by
@@ -136,23 +150,21 @@ theorem BasicKleenean.refines_true_false : forall bk1 bk2,
     (bk1 = true ∨ bk1 = false) → refines bk2 bk1 → bk2 = bk1 := by
   unfold refines; intros bk1 bk2 Htf Hr; cases bk1; all_goals cases bk2; all_goals simp_all
 
-def is_monotone (seq : Nat -> BasicKleenean) : Prop :=
-  forall (m n : Nat), m <= n -> BasicKleenean.refines (seq n) (seq m)
-
 structure Kleenean where
   mk ::
     seq : Nat -> BasicKleenean
-    mono : is_monotone seq
+    mono : TopologicalBasis.is_monotone seq
 
+abbrev Kleenean.is_monotone := @TopologicalBasis.is_monotone BasicKleenean
 
 def Kleenean.cnst (c : BasicKleenean) := fun (_ : Nat) => c
 
 theorem Kleenean.cnst_is_monotone : forall (c : BasicKleenean), is_monotone (cnst c) := by
   with_unfolding_all
-  unfold cnst is_monotone BasicKleenean.refines
+  unfold cnst is_monotone
   intros c m n H
-  cases c
-  all_goals simp_all
+  simp
+  exact TopologicalBasis.Basis.refines_refl c
 
 def Kleenean.true := Kleenean.mk (cnst .true) (cnst_is_monotone .true)
 def Kleenean.indeterminate := Kleenean.mk (cnst .indeterminate) (cnst_is_monotone .indeterminate)
@@ -236,6 +248,31 @@ def Kleenean.setoid : Setoid Kleenean := by
   exact Kleenean.equivalent
   exact Kleenean.equivalence
 -/
+
+private def Kleenean.known_from' (seq : Nat → BasicKleenean) : Nat → BasicKleenean :=
+  fun n ↦ match n with
+  | Nat.zero => seq n
+  | Nat.succ m =>
+     match known_from' seq m with
+     | .indeterminate => seq n
+     | _ => known_from' seq m
+
+private theorem Kleenean.known_from_seq_monotone (seq : Nat → BasicKleenean)
+  : Kleenean.is_monotone (known_from' seq) :=
+by
+  unfold is_monotone
+  apply (TopologicalBasis.weak_monotone_iff_strong_monotone _).mp
+  intro m
+  let km := known_from' seq m; have Ekm : km = known_from' seq m := by rfl
+  rw [←Ekm]; unfold known_from'; rw [←Ekm]
+  cases km
+  · case true => simp; exact BasicKleenean.refines_refl .true
+  · case indeterminate => simp; exact True.intro
+  · case false => simp; exact BasicKleenean.refines_refl .false
+
+def Kleenean.known_from (seq : Nat → BasicKleenean) : Kleenean :=
+  Kleenean.mk (known_from' seq) (known_from_seq_monotone seq)
+
 
 theorem Kleenean.is_true : forall (k : Kleenean),
     (exists (m : Nat), k.seq m = .true) → k ≡ true := by

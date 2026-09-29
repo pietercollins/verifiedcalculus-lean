@@ -1,4 +1,6 @@
+import VerifiedCalculus.Logic.Induction
 import VerifiedCalculus.Logic.SumBool
+import VerifiedCalculus.Logic.TopologicalBasis
 import VerifiedCalculus.Logic.Omniscience
 import VerifiedCalculus.Logic.Sierpinskians
 import VerifiedCalculus.Logic.Kleeneans
