@@ -120,6 +120,8 @@ class RoundedFloatTheory {𝔽 : Type} [Flt : RoundedFloatOperations 𝔽] : Pro
   div_correct : is_correctly_rounded_binary_nonzero Flt.ofNat Flt.toRat Flt.div Rat.div
   add_down_correct : ∀ x1 x2, Flt.toRat (Flt.add .down x1 x2) <= Flt.toRat x1 + Flt.toRat x2 :=
     fun x1 x2 => (add_correct x1 x2).down
+  min_correct : is_correct_binary Flt.toRat Flt.min (fun q1 q2 : Rat ↦ min q1 q2) := by
+    sorry
   max_correct : is_correct_binary Flt.toRat Flt.max (fun q1 q2 : Rat ↦ max q1 q2) := by
     sorry
 
